@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Library Management System</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: '#8b5cf6',
+        secondary: '#14b8a6'
+      },
+      boxShadow: {
+        glow: '0 10px 40px rgba(139,92,246,0.35)'
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif']
+      }
+    }
+  }
+};
+</script>
+<style>
+body {
+  background-color: #020617;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.glass-card {
+  background: linear-gradient(135deg, rgba(15,23,42,0.9), rgba(15,23,42,0.6));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 1.25rem;
+  box-shadow: 0 20px 60px rgba(15,23,42,0.6);
+}
+.divide-line {
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.frosted {
+  backdrop-filter: blur(14px);
+}
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148,163,184,0.4);
+  border-radius: 999px;
+}
+.tab-btn {
+  transition: all 0.25s ease;
+}
+.tab-btn.active {
+  background: linear-gradient(120deg, #8b5cf6, #ec4899);
+  color: white;
+  box-shadow: 0 10px 30px rgba(236,72,153,0.35);
+}
+.pulse {
+  animation: pulse 2.4s infinite;
+}
+@keyframes pulse {
+  0% { opacity: .65; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: .65; transform: scale(1); }
+}
+.floating {
+  animation: float 6s ease-in-out infinite;
+}
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+#chatMessages {
+  max-height: 260px;
+  overflow-y: auto;
+}
+#toast {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: all 0.35s ease;
+}
+.chat-bubble {
+  padding: 0.65rem 1rem;
+  border-radius: 1rem;
+  margin-bottom: 0.65rem;
+  max-width: 90%;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+.chat-bubble.user {
+  background: rgba(16,185,129,0.15);
+  margin-left: auto;
+}
+.chat-bubble.ai {
+  background: rgba(139,92,246,0.18);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(226,232,240,0.7);
+  padding-bottom: 0.75rem;
+}
+td {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(148,163,184,0.12);
+}
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+  margin-right: 0.35rem;
+}
+</style>
+</head>
+<body class="text-white antialiased">
+<div class="relative overflow-hidden">
+  <div class="absolute inset-0 -z-10">
+    <div class="absolute top-[-20%] right-[5%] w-[420px] h-[420px] bg-fuchsia-500/30 rounded-full blur-[150px]"></div>
+    <div class="absolute bottom-[-25%] left-[0%] w-[520px] h-[520px] bg-cyan-500/20 rounded-full blur-[200px]"></div>
+  </div>
+  <header class="px-6 pt-16 pb-12 md:pb-20">
+    <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-14 items-center">
+      <div>
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-sm text-white/80">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 pulse"></span>
+          Beta v3.2 — Autonomous library intelligence
+        </div>
+        <h1 class="text-4xl md:text-6xl font-semibold mt-6">AI Library Management OS</h1>
+        <p class="text-lg text-slate-200 mt-4">Unify admin oversight, member services, and predictive analytics across your entire library ecosystem with conversational AI at the core.</p>
+        <div class="flex flex-wrap gap-4 mt-8">
+          <button data-switch="admin" class="px-6 py-3 rounded-2xl bg-gradient-to-r from-violet-500 to-pink-500 shadow-glow text-white font-semibold hover:opacity-90 transition">Open Admin Console</button>
+          <button data-switch="user" class="px-6 py-3 rounded-2xl border border-white/30 text-white/90 hover:bg-white/10 transition">Enter User Space</button>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-10">
+          <div class="glass-card p-4">
+            <p class="text-xs uppercase tracking-widest text-white/60">Books managed</p>
+            <p class="text-3xl font-semibold mt-2" data-stat="books">0</p>
+            <p class="text-xs text-white/60 mt-1">live titles</p>
+          </div>
+          <div class="glass-card p-4">
+            <p class="text-xs uppercase tracking-widest text-white/60">Active users</p>
+            <p class="text-3xl font-semibold mt-2" data-stat="users">0</p>
+            <p class="text-xs text-white/60 mt-1">members synced</p>
+          </div>
+          <div class="glass-card p-4">
+            <p class="text-xs uppercase tracking-widest text-white/60">Monthly loans</p>
+            <p class="text-3xl font-semibold mt-2" data-stat="loans">0</p>
+            <p class="text-xs text-white/60 mt-1">AI forecast</p>
+          </div>
+        </div>
+      </div>
+      <div class="relative">
+        <div class="glass-card p-6 floating">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-white/60">Live circulation</p>
+              <p class="text-4xl font-semibold mt-1" data-stat="loanRate">0%</p>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-200 text-xs flex items-center gap-1">
+              <span class="w-2 h-2 bg-emerald-300 rounded-full pulse"></span>
+              AI Monitoring
+            </span>
+          </div>
+          <div class="grid grid-cols-2 gap-4 mt-6">
+            <div class="rounded-2xl bg-white/5 p-4 border border-white/10">
+              <p class="text-xs uppercase text-white/60 mb-1">Availability</p>
+              <p class="text-2xl font-semibold" data-stat="availability">0%</p>
+              <p class="text-xs text-emerald-300 mt-1">healthy inventory</p>
+            </div>
+            <div class="rounded-2xl bg-white/5 p-4 border border-white/10">
+              <p class="text-xs uppercase text-white/60 mb-1">Overdue risk</p>
+              <p class="text-2xl font-semibold" data-stat="overdue">0%</p>
+              <p class="text-xs text-rose-300 mt-1">AI mitigation</p>
+            </div>
+          </div>
+          <div class="divide-line my-6"></div>
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <p class="text-sm text-white/60">Reading streak</p>
+              <p class="text-3xl font-semibold" data-stat="streak">0 days</p>
+            </div>
+            <div class="text-right">
+              <p class="text-sm text-white/60">Next insight</p>
+              <p class="text-lg font-semibold text-emerald-300">Auto-predicting holds</p>
+            </div>
+          </div>
+          <div class="mt-6 grid grid-cols-3 gap-3 text-xs text-white/70">
+            <div class="rounded-xl bg-emerald-500/10 px-3 py-2 text-center">AI categorization</div>
+            <div class="rounded-xl bg-sky-500/10 px-3 py-2 text-center">Smart alerts</div>
+            <div class="rounded-xl bg-violet-500/10 px-3 py-2 text-center">ChatOps</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <section class="px-6 pb-14">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
+        <div>
+          <p class="text-sm uppercase tracking-[0.3em] text-white/60">System highlights</p>
+          <h2 class="text-3xl font-semibold mt-3">All-in-one AI-powered operations hub</h2>
+          <p class="text-white/70 mt-3 max-w-2xl">Blend catalog intelligence, conversational support, and compliance-ready automation for both administrators and readers.</p>
+        </div>
+        <div class="px-4 py-2 rounded-full bg-white/10 border border-white/10 text-sm text-white/80">99.98% uptime SLA</div>
+      </div>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="glass-card p-6">
+          <div class="w-12 h-12 rounded-2xl bg-violet-500/20 flex items-center justify-center text-2xl">⚙️</div>
+          <h3 class="text-xl font-semibold mt-4">Predictive Circulation</h3>
+          <p class="text-white/70 mt-2">AI models surface most borrowed & least utilized titles with proactive reorder recommendations.</p>
+        </div>
+        <div class="glass-card p-6">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-2xl">🔐</div>
+          <h3 class="text-xl font-semibold mt-4">Role-based Security</h3>
+          <p class="text-white/70 mt-2">Dedicated admin & user portals with MFA-ready workflows and ban/unban governance.</p>
+        </div>
+        <div class="glass-card p-6">
+          <div class="w-12 h-12 rounded-2xl bg-sky-500/20 flex items-center justify-center text-2xl">🤖</div>
+          <h3 class="text-xl font-semibold mt-4">Conversational Ops</h3>
+          <p class="text-white/70 mt-2">Embedded AI assistant executes admin queries, categorizes titles, and suggests readings instantly.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="access" class="px-6 py-16">
+    <div class="max-w-5xl mx-auto">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10">
+        <div>
+          <p class="text-sm uppercase tracking-[0.3em] text-white/60">Access control</p>
+          <h2 class="text-3xl font-semibold mt-3">Secure portals for every persona</h2>
+          <p class="text-white/70 mt-3">Authenticate admins and readers with instant context switching.</p>
+        </div>
+        <span class="px-4 py-2 rounded-full bg-emerald-400/10 text-emerald-300 text-sm border border-emerald-300/20">SSO & MFA Ready</span>
+      </div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="glass-card p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <p class="text-sm text-white/70">Admin Login</p>
+              <h3 class="text-2xl font-semibold">Control Center</h3>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-rose-500/20 text-rose-200 text-xs">Privileged</span>
+          </div>
+          <form id="adminLoginForm" class="space-y-4">
+            <div>
+              <label class="text-sm text-white/70">Work email</label>
+              <input type="email" name="email" required class="w-full mt-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-violet-400 outline-none" placeholder="admin@library.gov">
+            </div>
+            <div>
+              <label class="text-sm text-white/70">Password</label>
+              <input type="password" name="password" required class="w-full mt-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-violet-400 outline-none" placeholder="••••••••">
+            </div>
+            <div>
+              <label class="text-sm text-white/70">One-time code</label>
+              <input type="text" name="otp" class="w-full mt-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-violet-400 outline-none" placeholder="000000">
+            </div>
+            <div class="flex items-center justify-between text-sm text-white/70">
+              <label class="flex items-center gap-2">
+                <input type="checkbox" class="accent-violet-500">
+                Remember device
+              </label>
+              <a href="#" class="text-violet-300 hover:text-violet-200">Need help?</a>
+            </div>
+            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-violet-500 to-pink-500 font-semibold">Authenticate Admin</button>
+          </form>
+        </div>
+        <div class="glass-card p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <p class="text-sm text-white/70">User Login</p>
+              <h3 class="text-2xl font-semibold">Reader Workspace</h3>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-200 text-xs">Members</span>
+          </div>
+          <form id="userLoginForm" class="space-y-4">
+            <div>
+              <label class="text-sm text-white/70">Email</label>
+              <input type="email" name="email" required class="w-full mt-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-emerald-400 outline-none" placeholder="reader@domain.com">
+            </div>
+            <div>
+              <label class="text-sm text-white/70">Password</label>
+              <input type="password" name="password" required class="w-full mt-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-emerald-400 outline-none" placeholder="••••••••">
+            </div>
+            <div class="flex items-center justify-between text-sm text-white/70">
+              <label class="flex items-center gap-2">
+                <input type="checkbox" class="accent-emerald-500">
+                Stay signed in
+              </label>
+              <a href="#" class="text-emerald-300 hover:text-emerald-200">Forgot?</a>
+            </div>
+            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 font-semibold">Enter Library</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="dashboards" class="px-6 pb-20">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
+        <div>
+          <p class="text-sm uppercase tracking-[0.3em] text-white/60">Workspace</p>
+          <h2 class="text-3xl font-semibold mt-3">Operational cockpit</h2>
+          <p class="text-white/70 mt-2">Toggle between the admin command center and the user hub.</p>
+        </div>
+        <div class="bg-white/5 rounded-full p-1 flex w-full md:w-auto">
+          <button class="flex-1 md:flex-none tab-btn px-6 py-3 rounded-full font-semibold active" data-tab="admin">Admin Console</button>
+          <button class="flex-1 md:flex-none tab-btn px-6 py-3 rounded-full font-semibold text-white/70" data-tab="user">User Space</button>
+        </div>
+      </div>
+      <div id="adminPanel" class="space-y-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="glass-card p-4">
+            <p class="text-xs text-white/60 uppercase">Titles online</p>
+            <p class="text-2xl font-semibold mt-1" data-admin-stat="titles">0</p>
+          </div>
+          <div class="glass-card p-4">
+            <p class="text-xs text-white/60 uppercase">Checked out</p>
+            <p class="text-2xl font-semibold mt-1" data-admin-stat="checkedOut">0</p>
+          </div>
+          <div class="glass-card p-4">
+            <p class="text-xs text-white/60 uppercase">Reservations</p>
+            <p class="text-2xl font-semibold mt-1" data-admin-stat="reservations">0</p>
+          </div>
+          <div class="glass-card p-4">
+            <p class="text-xs text-white/60 uppercase">Banned users</p>
+            <p class="text-2xl font-semibold mt-1" data-admin-stat="banned">0</p>
+          </div>
+        </div>
+        <div class="grid lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 space-y-6">
+            <div class="glass-card p-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-white/60">Catalog automation</p>
+                  <h3 class="text-2xl font-semibold">Manage books</h3>
+                </div>
+                <span class="px-3 py-1 rounded-full bg-sky-500/20 text-sky-200 text-xs">Realtime Sync</span>
+              </div>
+              <form id="bookForm" class="mt-6 grid md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                  <label class="text-sm text-white/70">Title</label>
+                  <input type="text" name="title" required class="w-full mt-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-violet-400 outline-none" placeholder="e.g., Designing Data-Intensive Applications">
+                </div>
+                <div>
+                  <label class="text-sm text-white/70">Author</label>
+                  <input type="text" name="author" required class="w-full mt-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-violet-400 outline-none" placeholder="Author name">
+                </div>
+                <div>
+                  <label class="text-sm text-white/70">Category</label>
+                  <select name="category" class="w-full mt-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-violet-400 outline-none">
+                    <option>Technology</option>
+                    <option>Fiction</option>
+                    <option>History</option>
+                    <option>Productivity</option>
+                    <option>Wellness</option>
+                    <option>Science</option>
+                    <option>Business</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-sm text-white/70">Total copies</label>
+                  <input type="number" name="total" min="1" value="1" class="w-full mt-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-violet-400 outline-none">
+                </div>
+                <div>
+                  <label class="text-sm text-white/70">Available copies</label>
+                  <input type="number" name="available" min="0" value="1" class="w-full mt-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-violet-400 outline-none">
+                </div>
+                <div class="md:col-span-2">
+                  <label class="text-sm text-white/70">Tags</label>
+                  <input type="text" name="tags" class="w-full mt-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-violet-400 outline-none" placeholder="comma separated e.g., ai, ethics">
+                </div>
+                <div class="md:col-span-2 flex flex-wrap gap-3">
+                  <button type="submit" id="bookFormButton" class="px-6 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-pink-500 font-semibold">Save book</button>
+                  <button type="button" id="cancelEdit" class="px-6 py-3 rounded-xl border border-white/20 text-white/70">Cancel edit</button>
+                </div>
+              </form>
+            </div>
+            <div class="glass-card p-6 overflow-auto">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <p class="text-sm text-white/60">Catalog overview</p>
+                  <h3 class="text-2xl font-semibold">Live book list</h3>
+                </div>
+                <span class="text-xs text-white/60">Click to edit or remove</span>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th class="text-left">Title</th>
+                    <th class="text-left">Author</th>
+                    <th class="text-left">Status</th>
+                    <th class="text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="bookTableBody" class="text-sm text-white/80"></tbody>
+              </table>
+            </div>
+            <div class="glass-card p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <p class="text-sm text-white/60">User management</p>
+                  <h3 class="text-2xl font-semibold">Members & bans</h3>
+                </div>
+                <span class="px-3 py-1 rounded-full bg-orange-500/20 text-orange-200 text-xs">AML checks</span>
+              </div>
+              <form id="userForm" class="grid md:grid-cols-3 gap-4 mb-6">
+                <input type="text" name="name" placeholder="Full name" required class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-sky-400 outline-none md:col-span-1 col-span-3">
+                <input type="email" name="email" placeholder="email@domain.com" required class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-sky-400 outline-none md:col-span-1 col-span-3">
+                <select name="role" class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-sky-400 outline-none md:col-span-1 col-span-3">
+                  <option>Student</option>
+                  <option>Faculty</option>
+                  <option>Researcher</option>
+                  <option>Community</option>
+                </select>
+                <button type="submit" class="md:col-span-3 px-4 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 font-semibold">Add user</button>
+              </form>
+              <div id="userList" class="space-y-4"></div>
+            </div>
+          </div>
+          <div class="space-y-6">
+            <div class="glass-card p-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-white/60">AI insights</p>
+                  <h3 class="text-2xl font-semibold" id="trendHighlight">Top mover</h3>
+                </div>
+                <div class="text-right text-sm">
+                  <p class="text-white/60">Least used</p>
+                  <p class="font-semibold" id="leastUsed">—</p>
+                </div>
+              </div>
+              <div id="analyticsChart" class="mt-6 h-56"></div>
+              <ul id="trendList" class="mt-4 text-sm text-white/70 space-y-2"></ul>
+            </div>
+            <div class="glass-card p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold">AI book categorizer</h3>
+                <span class="text-xs text-emerald-300">NLP-enhanced</span>
+              </div>
+              <textarea id="aiCategoryInput" class="w-full h-28 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-emerald-400 outline-none text-sm" placeholder="Paste book blurb or keywords..."></textarea>
+              <button id="categorizeBtn" class="mt-4 w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 font-semibold">Generate category</button>
+              <div id="aiCategoryResult" class="mt-4 text-sm text-emerald-200">Waiting for text...</div>
+            </div>
+            <div class="glass-card p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold">Admin Copilot</h3>
+                <span class="text-xs text-white/60">ChatOps</span>
+              </div>
+              <div id="chatMessages" class="pr-2"></div>
+              <form id="chatForm" class="mt-4 flex gap-3">
+                <input id="chatInput" type="text" placeholder="Ask to ban a user or audit holds..." class="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-violet-400 outline-none">
+                <button type="submit" class="px-4 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 font-semibold">Send</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="userPanel" class="space-y-6 hidden">
+        <div class="grid lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 space-y-6">
+            <div class="glass-card p-6">
+              <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <div>
+                  <p class="text-sm text-white/60">Signed in as</p>
+                  <h3 class="text-2xl font-semibold" id="currentUserName">—</h3>
+                  <p class="text-sm text-white/60" id="currentUserEmail">—</p>
+                  <span id="userStatusBadge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-200 text-xs mt-3">Verified</span>
+                </div>
+                <div class="flex-1">
+                  <label class="text-sm text-white/60">Switch user</label>
+                  <select id="userSwitcher" class="w-full mt-2 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-emerald-400 outline-none"></select>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm text-white/60">Reading streak</p>
+                  <p class="text-3xl font-semibold" id="streakValue">0 days</p>
+                </div>
+              </div>
+              <div id="userStatusBanner" class="mt-4 px-4 py-3 rounded-xl bg-rose-500/15 text-rose-100 text-sm hidden">Account restricted. Please contact support to reinstate borrowing privileges.</div>
+            </div>
+            <div class="glass-card p-6">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h3 class="text-2xl font-semibold">Smart search</h3>
+                  <p class="text-sm text-white/70">AI prioritizes what you'll borrow next.</p>
+                </div>
+                <input id="searchInput" type="text" placeholder="Search by title, topic, or mood..." class="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-emerald-400 outline-none">
+              </div>
+              <div id="smartHint" class="mt-4 text-sm text-emerald-200">AI search is ready whenever you are.</div>
+              <div id="filterChips" class="flex flex-wrap gap-2 mt-4">
+                <button data-filter="Technology" class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm">Technology</button>
+                <button data-filter="Fiction" class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm">Fiction</button>
+                <button data-filter="History" class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm">History</button>
+                <button data-filter="Wellness" class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm">Wellness</button>
+                <button data-filter="Productivity" class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm">Productivity</button>
+              </div>
+            </div>
+            <div class="glass-card p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-2xl font-semibold">Available catalog</h3>
+                <span class="text-sm text-white/60">Tap to borrow</span>
+              </div>
+              <div id="catalogGrid" class="grid sm:grid-cols-2 gap-4"></div>
+            </div>
+          </div>
+          <div class="space-y-6">
+            <div class="glass-card p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold">Current loans</h3>
+                <span class="text-xs text-white/60">Auto-reminders on</span>
+              </div>
+              <div id="borrowedList" class="space-y-3"></div>
+            </div>
+            <div class="glass-card p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold">Borrowing timeline</h3>
+                <span class="text-xs text-white/60">Past activity</span>
+              </div>
+              <ul id="historyList" class="space-y-4 relative pl-2"></ul>
+            </div>
+            <div class="glass-card p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-semibold">AI reading coach</h3>
+                <span class="text-xs text-emerald-300">Personalized</span>
+              </div>
+              <div id="aiCoachList" class="space-y-3 text-sm text-white/80"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <footer class="px-6 pb-12">
+    <div class="max-w-6xl mx-auto border-t border-white/10 pt-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-sm text-white/60">
+      <p>© 2024 Lumina Library Cloud. Designed for responsive, secure deployments.</p>
+      <div class="flex gap-6">
+        <a href="#" class="hover:text-white">Status</a>
+        <a href="#" class="hover:text-white">Changelog</a>
+        <a href="#" class="hover:text-white">Security</a>
+      </div>
+    </div>
+  </footer>
+</div>
+<div id="toast" class="fixed bottom-6 right-6 px-5 py-3 rounded-2xl shadow-2xl text-sm font-medium frosted pointer-events-none"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const state = {
+    books: [
+      { id: 1, title: 'The Pragmatic Programmer', author: 'Andrew Hunt', category: 'Technology', totalCopies: 6, availableCopies: 2, borrowed: 42, tags: ['code','craft','career'] },
+      { id: 2, title: 'Atomic Habits', author: 'James Clear', category: 'Wellness', totalCopies: 8, availableCopies: 5, borrowed: 57, tags: ['habit','behavior','health'] },
+      { id: 3, title: 'Invisible Cities', author: 'Italo Calvino', category: 'Fiction', totalCopies: 4, availableCopies: 1, borrowed: 18, tags: ['novel','story','imagination'] },
+      { id: 4, title: 'Deep Work', author: 'Cal Newport', category: 'Productivity', totalCopies: 5, availableCopies: 0, borrowed: 33, tags: ['focus','workflow','career'] },
+      { id: 5, title: 'Designing Data-Intensive Applications', author: 'Martin Kleppmann', category: 'Technology', totalCopies: 3, availableCopies: 1, borrowed: 25, tags: ['data','architecture','distributed'] },
+      { id: 6, title: 'Sapiens: A Brief History of Humankind', author: 'Yuval Noah Harari', category: 'History', totalCopies: 7, availableCopies: 4, borrowed: 44, tags: ['history','culture','anthropology'] },
+      { id: 7, title: 'The Midnight Library', author: 'Matt Haig', category: 'Fiction', totalCopies: 5, availableCopies: 3, borrowed: 21, tags: ['novel','parallel','life'] },
+      { id: 8, title: 'How Not To Die', author: 'Michael Greger', category: 'Science', totalCopies: 4, availableCopies: 2, borrowed: 15, tags: ['nutrition','science','health'] }
+    ],
+    users: [
+      { id: 101, name: 'Amelia Stone', email: 'amelia@northfield.edu', role: 'Researcher', banned: false },
+      { id: 102, name: 'Noah Park', email: 'noah.park@campus.edu', role: 'Student', banned: false },
+      { id: 103, name: 'Liam Singh', email: 'liam.singh@faculty.edu', role: 'Faculty', banned: true },
+      { id: 104, name: 'Priya Das', email: 'priya.das@alumni.org', role: 'Community', banned: false }
+    ],
+    borrowHistory: [
+      { book: 'Atomic Habits', user: 'Noah Park', date: '2024-09-13' },
+      { book: 'Invisible Cities', user: 'Amelia Stone', date: '2024-09-10' },
+      { book: 'Deep Work', user: 'Priya Das', date: '2024-09-07' },
+      { book: 'Sapiens: A Brief History of Humankind', user: 'Amelia Stone', date: '2024-09-04' },
+      { book: 'The Midnight Library', user: 'Noah Park', date: '2024-09-02' },
+      { book: 'Designing Data-Intensive Applications', user: 'Liam Singh', date: '2024-08-31' }
+    ],
+    userBorrowed: [
+      { userId: 101, bookId: 5, borrowedOn: '2024-09-05', due: '2024-10-05' },
+      { userId: 101, bookId: 3, borrowedOn: '2024-09-12', due: '2024-10-12' },
+      { userId: 102, bookId: 2, borrowedOn: '2024-09-11', due: '2024-10-11' }
+    ],
+    currentUserId: 101,
+    editingBookId: null,
+    toastTimer: null
+  };
+
+  const dom = {
+    adminPanel: document.getElementById('adminPanel'),
+    userPanel: document.getElementById('userPanel'),
+    tabButtons: document.querySelectorAll('[data-tab]'),
+    heroSwitch: document.querySelectorAll('[data-switch]'),
+    bookForm: document.getElementById('bookForm'),
+    bookFormButton: document.getElementById('bookFormButton'),
+    cancelEdit: document.getElementById('cancelEdit'),
+    bookTableBody: document.getElementById('bookTableBody'),
+    userForm: document.getElementById('userForm'),
+    userList: document.getElementById('userList'),
+    analyticsChart: document.getElementById('analyticsChart'),
+    trendHighlight: document.getElementById('trendHighlight'),
+    leastUsed: document.getElementById('leastUsed'),
+    trendList: document.getElementById('trendList'),
+    aiCategoryInput: document.getElementById('aiCategoryInput'),
+    aiCategoryResult: document.getElementById('aiCategoryResult'),
+    categorizeBtn: document.getElementById('categorizeBtn'),
+    chatForm: document.getElementById('chatForm'),
+    chatInput: document.getElementById('chatInput'),
+    chatMessages: document.getElementById('chatMessages'),
+    searchInput: document.getElementById('searchInput'),
+    smartHint: document.getElementById('smartHint'),
+    catalogGrid: document.getElementById('catalogGrid'),
+    borrowedList: document.getElementById('borrowedList'),
+    historyList: document.getElementById('historyList'),
+    userSwitcher: document.getElementById('userSwitcher'),
+    currentUserName: document.getElementById('currentUserName'),
+    currentUserEmail: document.getElementById('currentUserEmail'),
+    userStatusBadge: document.getElementById('userStatusBadge'),
+    userStatusBanner: document.getElementById('userStatusBanner'),
+    streakValue: document.getElementById('streakValue'),
+    aiCoachList: document.getElementById('aiCoachList'),
+    toast: document.getElementById('toast'),
+    adminStats: {
+      titles: document.querySelector('[data-admin-stat="titles"]'),
+      checkedOut: document.querySelector('[data-admin-stat="checkedOut"]'),
+      reservations: document.querySelector('[data-admin-stat="reservations"]'),
+      banned: document.querySelector('[data-admin-stat="banned"]')
+    },
+    heroStats: {
+      books: document.querySelector('[data-stat="books"]'),
+      users: document.querySelector('[data-stat="users"]'),
+      loans: document.querySelector('[data-stat="loans"]'),
+      loanRate: document.querySelector('[data-stat="loanRate"]'),
+      availability: document.querySelector('[data-stat="availability"]'),
+      overdue: document.querySelector('[data-stat="overdue"]'),
+      streak: document.querySelector('[data-stat="streak"]')
+    },
+    adminLoginForm: document.getElementById('adminLoginForm'),
+    userLoginForm: document.getElementById('userLoginForm'),
+    filterChips: document.getElementById('filterChips')
+  };
+
+  function getCurrentUser() {
+    return state.users.find(u => u.id === state.currentUserId) || state.users[0];
+  }
+
+  function showToast(message, type = 'success') {
+    dom.toast.textContent = message;
+    dom.toast.style.background = type === 'error' ? 'rgba(248,113,113,0.9)' : 'rgba(16,185,129,0.9)';
+    dom.toast.style.opacity = 1;
+    dom.toast.style.transform = 'translateY(0)';
+    dom.toast.classList.add('pointer-events-auto');
+    clearTimeout(state.toastTimer);
+    state.toastTimer = setTimeout(() => {
+      dom.toast.style.opacity = 0;
+      dom.toast.style.transform = 'translateY(16px)';
+      dom.toast.classList.remove('pointer-events-auto');
+    }, 3200);
+  }
+
+  function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  function renderBooksTable() {
+    if (!dom.bookTableBody) return;
+    if (!state.books.length) {
+      dom.bookTableBody.innerHTML = '<tr><td colspan="4" class="py-6 text-center text-white/60">No books yet.</td></tr>';
+      return;
+    }
+    const rows = state.books.map(book => {
+      const status = book.availableCopies > 0 ? 'Available' : 'Checked out';
+      const statusColor = book.availableCopies > 0 ? 'bg-emerald-400' : 'bg-rose-400';
+      return `
+        <tr>
+          <td>
+            <div class="font-semibold">${book.title}</div>
+            <div class="text-xs text-white/60">${book.category}</div>
+          </td>
+          <td>${book.author}</td>
+          <td>
+            <span class="inline-flex items-center text-sm ${book.availableCopies > 0 ? 'text-emerald-300' : 'text-rose-300'}">
+              <span class="status-dot ${statusColor}"></span>${status} (${book.availableCopies}/${book.totalCopies})
+            </span>
+          </td>
+          <td class="text-right space-x-2">
+            <button data-action="edit" data-id="${book.id}" class="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-xs">Edit</button>
+            <button data-action="remove" data-id="${book.id}" class="px-3 py-1 rounded-lg bg-rose-500/20 text-rose-100 text-xs">Remove</button>
+          </td>
+        </tr>`;
+    }).join('');
+    dom.bookTableBody.innerHTML = rows;
+  }
+
+  function renderUsers() {
+    if (!dom.userList) return;
+    if (!state.users.length) {
+      dom.userList.innerHTML = '<p class="text-sm text-white/60">No users registered.</p>';
+      return;
+    }
+    dom.userList.innerHTML = state.users.map(user => `
+      <div class="glass-card p-4 flex items-center justify-between gap-4">
+        <div>
+          <p class="font-semibold">${user.name}</p>
+          <p class="text-sm text-white/60">${user.email}</p>
+          <span class="text-xs text-white/60">${user.role}</span>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <button data-action="toggle-ban" data-id="${user.id}" class="px-3 py-2 rounded-xl ${user.banned ? 'bg-emerald-500/15 text-emerald-200' : 'bg-rose-500/15 text-rose-100'} text-xs">
+            ${user.banned ? 'Unban' : 'Ban'}
+          </button>
+          <button data-action="remove-user" data-id="${user.id}" class="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs">Remove</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderBorrowHistory() {
+    if (!dom.historyList) return;
+    dom.historyList.innerHTML = state.borrowHistory.slice(0, 6).map(item => `
+      <li class="relative pl-6">
+        <span class="absolute left-0 top-2 w-3 h-3 rounded-full bg-emerald-400"></span>
+        <div class="flex items-center justify-between">
+          <p class="font-semibold">${item.book}</p>
+          <span class="text-xs text-white/60">${formatDate(item.date)}</span>
+        </div>
+        <p class="text-sm text-white/60">${item.user}</p>
+      </li>
+    `).join('');
+  }
+
+  function renderBorrowedList() {
+    if (!dom.borrowedList) return;
+    const currentUser = getCurrentUser();
+    const loans = state.userBorrowed.filter(entry => entry.userId === currentUser.id);
+    if (!loans.length) {
+      dom.borrowedList.innerHTML = '<p class="text-sm text-white/60">No active loans. Borrow a title to see it here.</p>';
+      return;
+    }
+    dom.borrowedList.innerHTML = loans.map(entry => {
+      const book = state.books.find(b => b.id === entry.bookId);
+      if (!book) return '';
+      return `
+        <div class="glass-card p-4 flex items-start justify-between gap-3">
+          <div>
+            <p class="font-semibold">${book.title}</p>
+            <p class="text-sm text-white/60">Due ${formatDate(entry.due)}</p>
+          </div>
+          <button data-action="return" data-id="${book.id}" class="text-sm text-rose-200 hover:text-rose-100">Return</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function relevanceScore(book, query) {
+    if (!query) return 0;
+    let score = 0;
+    const q = query.toLowerCase();
+    if (book.title.toLowerCase().includes(q)) score += 5;
+    if (book.author.toLowerCase().includes(q)) score += 3;
+    if (book.category.toLowerCase().includes(q)) score += 2;
+    book.tags.forEach(tag => {
+      if (tag.toLowerCase().includes(q)) score += 1;
+    });
+    score += Math.min(book.borrowed, 60) / 60;
+    return score;
+  }
+
+  function renderUserCatalog(query = '') {
+    if (!dom.catalogGrid) return;
+    let filtered = [...state.books];
+    const normalized = query.trim().toLowerCase();
+    if (normalized) {
+      filtered = filtered.filter(book => {
+        const haystack = `${book.title} ${book.author} ${book.category} ${book.tags.join(' ')}`.toLowerCase();
+        return haystack.includes(normalized);
+      }).sort((a, b) => relevanceScore(b, normalized) - relevanceScore(a, normalized));
+    }
+    if (!filtered.length) {
+      dom.catalogGrid.innerHTML = '<div class="text-sm text-white/60">No books match your search. Try another keyword.</div>';
+      dom.smartHint.textContent = 'AI could not find an immediate match. Try a broader topic.';
+      return;
+    }
+    const currentUser = getCurrentUser();
+    dom.catalogGrid.innerHTML = filtered.map(book => {
+      const unavailable = book.availableCopies === 0 || currentUser.banned || state.userBorrowed.some(entry => entry.userId === currentUser.id && entry.bookId === book.id);
+      return `
+        <div class="glass-card p-4 flex flex-col justify-between">
+          <div>
+            <p class="text-xs text-white/60 uppercase">${book.category}</p>
+            <h4 class="text-lg font-semibold mt-1">${book.title}</h4>
+            <p class="text-sm text-white/60">${book.author}</p>
+            <p class="text-xs text-white/40 mt-2">Borrowed ${book.borrowed}x</p>
+          </div>
+          <div class="mt-4 flex items-center justify-between">
+            <span class="text-sm ${book.availableCopies > 0 ? 'text-emerald-300' : 'text-rose-300'}">${book.availableCopies} available</span>
+            <button data-action="borrow" data-id="${book.id}" class="px-4 py-2 rounded-xl text-sm font-semibold ${unavailable ? 'bg-white/10 text-white/40 cursor-not-allowed' : 'bg-gradient-to-r from-emerald-500 to-cyan-500'}" ${unavailable ? 'disabled' : ''}>${book.availableCopies === 0 ? 'On hold' : 'Borrow'}</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+    const topPick = filtered[0];
+    dom.smartHint.textContent = normalized ? `AI suggests “${topPick.title}” based on your query.` : 'AI search is ready to predict your next great read.';
+  }
+
+  function renderAnalytics() {
+    if (!dom.analyticsChart) return;
+    const data = [...state.books].sort((a, b) => b.borrowed - a.borrowed).slice(0, 4).map(book => ({ name: book.title, value: book.borrowed }));
+    const categoryTotals = state.books.reduce((acc, book) => {
+      acc[book.category] = (acc[book.category] || 0) + book.borrowed;
+      return acc;
+    }, {});
+    const sortedCategories = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
+    dom.trendHighlight.textContent = data[0] ? `${data[0].name}` : 'No data';
+    const least = [...state.books].sort((a, b) => a.borrowed - b.borrowed)[0];
+    dom.leastUsed.textContent = least ? least.title : '—';
+    dom.trendList.innerHTML = sortedCategories.slice(0, 3).map(([category, value]) => {
+      const delta = Math.round((value / (state.borrowHistory.length || 1)) * 12);
+      return `<li class="flex items-center justify-between"><span>${category}</span><span class="text-emerald-300 text-xs">+${delta}%</span></li>`;
+    }).join('');
+    const width = dom.analyticsChart.clientWidth || 320;
+    const height = 220;
+    dom.analyticsChart.innerHTML = '';
+    const svg = d3.select(dom.analyticsChart).append('svg').attr('width', width).attr('height', height);
+    const margin = { top: 10, right: 20, bottom: 24, left: 120 };
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
+    const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+    const y = d3.scaleBand().domain(data.map(d => d.name)).range([0, chartHeight]).padding(0.35);
+    const x = d3.scaleLinear().domain([0, d3.max(data, d => d.value) || 1]).range([0, chartWidth]);
+    g.selectAll('rect').data(data).enter().append('rect')
+      .attr('y', d => y(d.name))
+      .attr('x', 0)
+      .attr('height', y.bandwidth())
+      .attr('width', d => x(d.value))
+      .attr('rx', 10)
+      .attr('fill', 'url(#gradientBar)');
+    const gradient = svg.append('defs').append('linearGradient')
+      .attr('id', 'gradientBar')
+      .attr('x1', '0%').attr('x2', '100%').attr('y1', '0%').attr('y2', '0%');
+    gradient.append('stop').attr('offset', '0%').attr('stop-color', '#8b5cf6');
+    gradient.append('stop').attr('offset', '100%').attr('stop-color', '#ec4899');
+    g.selectAll('text.label').data(data).enter().append('text')
+      .attr('x', d => x(d.value) + 8)
+      .attr('y', d => y(d.name) + y.bandwidth() / 2 + 4)
+      .text(d => d.value)
+      .attr('fill', '#e2e8f0')
+      .attr('font-size', 12);
+    const axis = g.append('g').call(d3.axisLeft(y).tickSize(0));
+    axis.selectAll('text').attr('fill', '#94a3b8');
+    axis.selectAll('path, line').remove();
+  }
+
+  function updateHeadlineStats() {
+    const totalTitles = state.books.length;
+    const totalUsers = state.users.length;
+    const totals = state.books.reduce((acc, book) => {
+      acc.total += book.totalCopies;
+      acc.available += book.availableCopies;
+      acc.checkedOut += (book.totalCopies - book.availableCopies);
+      acc.borrowed += book.borrowed;
+      return acc;
+    }, { total: 0, available: 0, checkedOut: 0, borrowed: 0 });
+    dom.heroStats.books.textContent = totalTitles;
+    dom.heroStats.users.textContent = totalUsers;
+    dom.heroStats.loans.textContent = totals.borrowed;
+    dom.heroStats.loanRate.textContent = totals.total ? `${Math.round((totals.checkedOut / totals.total) * 100)}%` : '0%';
+    dom.heroStats.availability.textContent = totals.total ? `${Math.round((totals.available / totals.total) * 100)}%` : '0%';
+    dom.heroStats.overdue.textContent = `${Math.max(3, state.userBorrowed.length * 2)}%`;
+    dom.heroStats.streak.textContent = `${calculateStreak(getCurrentUser())} days`;
+  }
+
+  function renderAdminStats() {
+    const totals = state.books.reduce((acc, book) => {
+      acc.checkedOut += (book.totalCopies - book.availableCopies);
+      return acc;
+    }, { checkedOut: 0 });
+    dom.adminStats.titles.textContent = state.books.length;
+    dom.adminStats.checkedOut.textContent = totals.checkedOut;
+    dom.adminStats.reservations.textContent = Math.round(totals.checkedOut * 0.35);
+    dom.adminStats.banned.textContent = state.users.filter(u => u.banned).length;
+  }
+
+  function calculateStreak(user) {
+    const historyCount = state.borrowHistory.filter(entry => entry.user === user.name).length;
+    const active = state.userBorrowed.filter(entry => entry.userId === user.id).length;
+    return Math.min(30, historyCount + active * 3 + 2);
+  }
+
+  function updateUserSummary() {
+    const user = getCurrentUser();
+    dom.currentUserName.textContent = user.name;
+    dom.currentUserEmail.textContent = user.email;
+    dom.streakValue.textContent = `${calculateStreak(user)} days`;
+    dom.userSwitcher.value = user.id;
+    if (user.banned) {
+      dom.userStatusBadge.textContent = 'Banned';
+      dom.userStatusBadge.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/20 text-rose-100 text-xs mt-3';
+      dom.userStatusBanner.classList.remove('hidden');
+    } else {
+      dom.userStatusBadge.textContent = 'Verified';
+      dom.userStatusBadge.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-200 text-xs mt-3';
+      dom.userStatusBanner.classList.add('hidden');
+    }
+  }
+
+  function renderCoachSuggestions() {
+    const user = getCurrentUser();
+    const userLoans = state.userBorrowed.filter(entry => entry.userId === user.id);
+    let preferredCategory = 'Technology';
+    if (userLoans.length) {
+      const counts = {};
+      userLoans.forEach(entry => {
+        const book = state.books.find(b => b.id === entry.bookId);
+        if (book) {
+          counts[book.category] = (counts[book.category] || 0) + 1;
+        }
+      });
+      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      if (sorted[0]) preferredCategory = sorted[0][0];
+    } else {
+      const top = [...state.books].sort((a, b) => b.borrowed - a.borrowed)[0];
+      if (top) preferredCategory = top.category;
+    }
+    const suggestions = state.books.filter(book => book.category === preferredCategory && !userLoans.some(entry => entry.bookId === book.id)).slice(0, 3);
+    if (!suggestions.length) {
+      dom.aiCoachList.innerHTML = '<p class="text-white/60 text-sm">AI is learning your tastes. Borrow a book to get tailored tips.</p>';
+      return;
+    }
+    dom.aiCoachList.innerHTML = suggestions.map(book => `
+      <div class="flex items-start gap-3">
+        <div class="w-2 h-2 rounded-full bg-emerald-400 mt-2"></div>
+        <div>
+          <p class="font-semibold">${book.title}</p>
+          <p class="text-xs text-white/60">${book.category} · ${book.borrowed} lifetime borrows</p>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function populateUserSwitcher() {
+    dom.userSwitcher.innerHTML = state.users.map(user => `<option value="${user.id}">${user.name} (${user.role})</option>`).join('');
+  }
+
+  function borrowBook(bookId) {
+    const user = getCurrentUser();
+    if (user.banned) {
+      showToast('Account restricted. Unable to borrow.', 'error');
+      return;
+    }
+    const book = state.books.find(b => b.id === bookId);
+    if (!book || book.availableCopies === 0) {
+      showToast('Book currently unavailable.', 'error');
+      return;
+    }
+    if (state.userBorrowed.some(entry => entry.userId === user.id && entry.bookId === bookId)) {
+      showToast('Already borrowed this title.', 'error');
+      return;
+    }
+    book.availableCopies -= 1;
+    const borrowedOn = new Date();
+    const dueDate = new Date(borrowedOn);
+    dueDate.setDate(dueDate.getDate() + 30);
+    state.userBorrowed.push({ userId: user.id, bookId, borrowedOn: borrowedOn.toISOString(), due: dueDate.toISOString() });
+    state.borrowHistory.unshift({ book: book.title, user: user.name, date: borrowedOn.toISOString() });
+    showToast(`Borrowed “${book.title}”`);
+    refreshUI();
+  }
+
+  function returnBook(bookId) {
+    const entryIndex = state.userBorrowed.findIndex(entry => entry.userId === state.currentUserId && entry.bookId === bookId);
+    if (entryIndex === -1) return;
+    const book = state.books.find(b => b.id === bookId);
+    if (book) {
+      book.availableCopies = Math.min(book.totalCopies, book.availableCopies + 1);
+    }
+    state.userBorrowed.splice(entryIndex, 1);
+    showToast('Book returned. Thank you!');
+    refreshUI();
+  }
+
+  function startEditBook(bookId) {
+    const book = state.books.find(b => b.id === bookId);
+    if (!book) return;
+    state.editingBookId = bookId;
+    const form = dom.bookForm;
+    form.title.value = book.title;
+    form.author.value = book.author;
+    form.category.value = book.category;
+    form.total.value = book.totalCopies;
+    form.available.value = book.availableCopies;
+    form.tags.value = book.tags.join(', ');
+    dom.bookFormButton.textContent = 'Update book';
+    showToast(`Editing “${book.title}”`, 'success');
+  }
+
+  function clearBookForm() {
+    dom.bookForm.reset();
+    dom.bookFormButton.textContent = 'Save book';
+    state.editingBookId = null;
+  }
+
+  function removeBook(bookId) {
+    const index = state.books.findIndex(book => book.id === bookId);
+    if (index === -1) return;
+    const [removed] = state.books.splice(index, 1);
+    state.userBorrowed = state.userBorrowed.filter(entry => entry.bookId !== bookId);
+    showToast(`Removed “${removed.title}”`);
+    refreshUI();
+  }
+
+  function toggleBan(userId) {
+    const user = state.users.find(u => u.id === userId);
+    if (!user) return;
+    user.banned = !user.banned;
+    showToast(`${user.banned ? 'Banned' : 'Unbanned'} ${user.name}`);
+    refreshUI();
+  }
+
+  function removeUser(userId) {
+    const index = state.users.findIndex(u => u.id === userId);
+    if (index === -1) return;
+    const [removed] = state.users.splice(index, 1);
+    if (state.currentUserId === removed.id) {
+      state.currentUserId = state.users[0] ? state.users[0].id : null;
+    }
+    state.userBorrowed = state.userBorrowed.filter(entry => entry.userId !== removed.id);
+    showToast(`Removed user ${removed.name}`);
+    populateUserSwitcher();
+    refreshUI();
+  }
+
+  function categorizeText(text) {
+    if (!text.trim()) {
+      dom.aiCategoryResult.textContent = 'Please paste some content.';
+      return;
+    }
+    const categories = {
+      Technology: ['code','data','software','system','engineering','ai'],
+      Fiction: ['story','novel','character','narrative','imaginary','cities','library'],
+      Wellness: ['habit','health','mind','body','wellness','life'],
+      History: ['history','ancient','civilization','culture','humankind','past'],
+      Productivity: ['work','focus','career','productivity','deep'],
+      Science: ['science','biology','physics','research','study'],
+      Business: ['strategy','management','finance','business','economy']
+    };
+    const lower = text.toLowerCase();
+    let best = 'General';
+    let bestScore = 0;
+    Object.entries(categories).forEach(([category, keywords]) => {
+      let score = 0;
+      keywords.forEach(keyword => {
+        if (lower.includes(keyword)) score += 2;
+      });
+      if (score > bestScore) {
+        bestScore = score;
+        best = category;
+      }
+    });
+    dom.aiCategoryResult.innerHTML = `AI suggests <span class="text-emerald-300 font-semibold">${best}</span> (${bestScore} confidence points)`;
+  }
+
+  function initChat() {
+    dom.chatMessages.innerHTML = `
+      <div class="chat-bubble ai">Hi Admin! I can categorize books, surface trends, or ban users. Try “Show me overdue risk”.</div>
+    `;
+  }
+
+  function addChatMessage(text, role = 'user') {
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble ${role}`;
+    bubble.textContent = text;
+    dom.chatMessages.appendChild(bubble);
+    dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight;
+  }
+
+  function generateAiResponse(message) {
+    const lower = message.toLowerCase();
+    if (lower.includes('overdue')) {
+      return 'Overdue risk is trending at 7%. Recommend targeting Atomic Habits & Deep Work borrowers.';
+    }
+    if (lower.includes('ban')) {
+      return 'Use the ban toggle in User Management or tell me “ban {email}”. I can flag repeated offenses.';
+    }
+    if (lower.includes('category')) {
+      return 'Paste a synopsis into the AI categorizer and I will tag it automatically.';
+    }
+    return 'Task logged! I can also summarize trends, categorize titles, or draft notifications.';
+  }
+
+  function renderAll() {
+    renderBooksTable();
+    renderUsers();
+    renderBorrowHistory();
+    renderBorrowedList();
+    renderUserCatalog(dom.searchInput ? dom.searchInput.value : '');
+    renderAnalytics();
+    updateHeadlineStats();
+    updateUserSummary();
+    renderCoachSuggestions();
+    renderAdminStats();
+  }
+
+  dom.bookForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const formData = new FormData(dom.bookForm);
+    const total = Math.max(1, Number(formData.get('total')));
+    const available = Math.min(total, Math.max(0, Number(formData.get('available'))));
+    const payload = {
+      title: formData.get('title').trim(),
+      author: formData.get('author').trim(),
+      category: formData.get('category'),
+      totalCopies: total,
+      availableCopies: available,
+      tags: formData.get('tags').split(',').map(t => t.trim()).filter(Boolean),
+      borrowed: state.editingBookId ? state.books.find(b => b.id === state.editingBookId).borrowed : 0
+    };
+    if (state.editingBookId) {
+      const book = state.books.find(b => b.id === state.editingBookId);
+      Object.assign(book, payload);
+      showToast(`Updated “${book.title}”`);
+    } else {
+      payload.id = Date.now();
+      state.books.push(payload);
+      showToast(`Added “${payload.title}”`);
+    }
+    clearBookForm();
+    renderAll();
+  });
+
+  dom.cancelEdit.addEventListener('click', () => {
+    clearBookForm();
+  });
+
+  dom.bookTableBody.addEventListener('click', e => {
+    const button = e.target.closest('button');
+    if (!button) return;
+    const id = Number(button.dataset.id);
+    if (button.dataset.action === 'edit') {
+      startEditBook(id);
+    } else if (button.dataset.action === 'remove') {
+      removeBook(id);
+    }
+  });
+
+  dom.userForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const formData = new FormData(dom.userForm);
+    const user = {
+      id: Date.now(),
+      name: formData.get('name').trim(),
+      email: formData.get('email').trim(),
+      role: formData.get('role'),
+      banned: false
+    };
+    state.users.push(user);
+    dom.userForm.reset();
+    populateUserSwitcher();
+    showToast(`Added user ${user.name}`);
+    renderAll();
+  });
+
+  dom.userList.addEventListener('click', e => {
+    const button = e.target.closest('button');
+    if (!button) return;
+    const id = Number(button.dataset.id);
+    if (button.dataset.action === 'toggle-ban') {
+      toggleBan(id);
+    } else if (button.dataset.action === 'remove-user') {
+      removeUser(id);
+    }
+  });
+
+  dom.catalogGrid.addEventListener('click', e => {
+    const button = e.target.closest('button[data-action="borrow"]');
+    if (!button) return;
+    borrowBook(Number(button.dataset.id));
+  });
+
+  dom.borrowedList.addEventListener('click', e => {
+    const button = e.target.closest('button[data-action="return"]');
+    if (!button) return;
+    returnBook(Number(button.dataset.id));
+  });
+
+  dom.categorizeBtn.addEventListener('click', () => {
+    categorizeText(dom.aiCategoryInput.value);
+  });
+
+  dom.chatForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const message = dom.chatInput.value.trim();
+    if (!message) return;
+    addChatMessage(message, 'user');
+    dom.chatInput.value = '';
+    setTimeout(() => addChatMessage(generateAiResponse(message), 'ai'), 600);
+  });
+
+  dom.searchInput.addEventListener('input', e => {
+    renderUserCatalog(e.target.value);
+  });
+
+  dom.userSwitcher.addEventListener('change', e => {
+    state.currentUserId = Number(e.target.value);
+    renderAll();
+  });
+
+  dom.filterChips.addEventListener('click', e => {
+    const button = e.target.closest('button[data-filter]');
+    if (!button) return;
+    const value = button.dataset.filter;
+    dom.searchInput.value = value;
+    renderUserCatalog(value);
+  });
+
+  dom.adminLoginForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const email = new FormData(dom.adminLoginForm).get('email');
+    showToast(`Admin portal unlocked for ${email || 'admin'}`);
+  });
+
+  dom.userLoginForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const formData = new FormData(dom.userLoginForm);
+    const email = formData.get('email').trim();
+    const user = state.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (user) {
+      state.currentUserId = user.id;
+      dom.userSwitcher.value = user.id;
+      renderAll();
+      showToast(`Welcome back, ${user.name}`);
+    } else {
+      showToast('User not found.', 'error');
+    }
+  });
+
+  dom.tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      dom.tabButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+      if (button.dataset.tab === 'admin') {
+        dom.adminPanel.classList.remove('hidden');
+        dom.userPanel.classList.add('hidden');
+      } else {
+        dom.adminPanel.classList.add('hidden');
+        dom.userPanel.classList.remove('hidden');
+      }
+    });
+  });
+
+  dom.heroSwitch.forEach(button => {
+    button.addEventListener('click', () => {
+      const target = button.dataset.switch;
+      dom.tabButtons.forEach(btn => {
+        if (btn.dataset.tab === target) btn.click();
+      });
+      document.getElementById('dashboards').scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
+  window.addEventListener('resize', () => {
+    clearTimeout(window.analyticsResizeTimer);
+    window.analyticsResizeTimer = setTimeout(() => renderAnalytics(), 300);
+  });
+
+  populateUserSwitcher();
+  initChat();
+  renderAll();
+});
+</script>
+</body>
+</html>
